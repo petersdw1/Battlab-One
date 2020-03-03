@@ -1,27 +1,10 @@
 //******************************************************************************
-//   MSP430G2xx3 Demo - USCI_B0, I2C Master multiple byte TX/RX
+//   MSP430G2xx3 based IOTA-1
 //
-//   Description: I2C master communicates to I2C slave sending and receiving
-//   3 different messages of different length. I2C master will enter LPM0 mode
-//   while waiting for the messages to be sent/receiving using I2C interrupt.
-//   ACLK = NA, MCLK = SMCLK = DCO 16MHz.
-//
-//
-//                   MSP430G2553         3.3V
-//                 -----------------   /|\ /|\
-//            /|\ |                 |   |  4.7k
-//             |  |                 |  4.7k |
-//             ---|RST              |   |   |
-//                |                 |   |   |
-//                |             P1.6|---|---+- I2C Clock (UCB0SCL)
-//                |                 |   |
-//                |             P1.7|---+----- I2C Data (UCB0SDA)
-//                |                 |
-//                |                 |
-//
-//   Nima Eskandari
-//   Texas Instruments Inc.
-//   April 2017
+//   Doug Peters
+//   Bluebird Labs LLC.
+//   www.bluebird.com
+//   February 2019
 //   Built with CCS V7.0
 //******************************************************************************
 
@@ -42,7 +25,6 @@
 #define MAX_BUFFER_SIZE     20
 
 volatile char d[5];
-unsigned char *current_value = 0x1000;
 
 //*****************************************************************************
 //RDAC Registers **************************************************************
@@ -66,8 +48,6 @@ uint8_t SetR1_4_2 [1] = { 0xD2}; //4.2V
 uint8_t SetR1_4_5 [1] = { 0xE4}; //4.5V
 
 
-
-
 //******************************************************************************
 //RDAC Data - Values for WriteReg **********************************************
 //******************************************************************************
@@ -77,9 +57,12 @@ uint8_t Reg_Data [1] = { 0x00};
 //******************************************************************************
 //RDAC Data - Values for INA233 **********************************************
 //******************************************************************************
-uint8_t INA_D0 [2] = { 0x05,0x40 };
+uint8_t INA_D0 [2] = { 0x27,0x41 }; ///ADC CONFIG
 //uint8_t INA_D0 [2] = { 0x25,0x42 }; //set parameters for INA233 D0h register MFR_ADC_CONFIG
-uint8_t INA_D4 [2] = { 0x01,0x00 };
+
+uint8_t INA_D4 [2] = { 0x68,0x06 }; ///MFR CAL
+
+uint8_t INA1_D4 [2] = { 0xAA,0x06 }; ///MFR CAL
 
 //******************************************************************************
 // General I2C State Machine ***************************************************
@@ -213,8 +196,6 @@ void CopyArray(uint8_t *source, uint8_t *dest, uint8_t count)
 void uartInit(void);
 void bin2bcd(unsigned int v);
 void putc(unsigned char c);
-void capture_i(void);
-void erase_SegCD(void);
 
 
 //******************************************************************************
@@ -262,7 +243,7 @@ void uartInit()
       // UCA0BR0 = 138;               // 16MHz/138 ~115200
       // UCA0BR0 = 0x8A;
       // UCA0BR1 = 0x00;
-       UCA0BR0 = 78;
+       UCA0BR0 = 138;
        UCA0BR1 = 0;
 
        UCA0MCTL = UCBRS2 + UCBRS0;        // Modulation UCBRSx = 5
@@ -287,6 +268,15 @@ void bin2bcd(unsigned int v)
      v=v/10; }
 }
 
+void delay_ms(unsigned int ms)
+{
+    while (ms)
+    {
+        __delay_cycles(16000);
+        ms--;
+    }
+}
+
 void delay(unsigned long d)
 {
   unsigned long delay;
@@ -308,8 +298,7 @@ int main(void) {
     uartInit();                  // Initialize UART
     initI2C();
 
-
-    // USE Pin 2.0 for turning Voltage output ON/OFF
+// USE Pin 2.0 for turning Voltage output ON/OFF
     P2SEL &= (~BIT0);  // Set P2.0 SEL for GPIO
     P2SEL2 &= (~BIT0); // Set P2.0 SEL for GPIO
     P2DIR |= BIT0;    // Set P2.0 as Output
@@ -327,7 +316,16 @@ int main(void) {
     P2IES &= ~BIT1;    // P2.1 LO/HI edge
     P2IFG &= ~BIT1;    // P2.1 IFG cleared
 
+ // USE Pin 2.0 for turning Voltage output ON/OFF
+     P2SEL &= (~BIT2);  // Set P2.2 SEL for GPIO
+     P2SEL2 &= (~BIT2); // Set P2.2 SEL for GPIO
+     P2DIR |= BIT2;    // Set P2.2 as Output
+     P2OUT |= BIT2; // Set P2.2 LOW
+
+    delay_ms(100);
+
     I2C_Master_WriteReg(0x40, 0xD0, INA_D0, 0x02);
+    I2C_Master_WriteReg(0x40, 0xD4, INA_D4, 0x02);
 
   //  _BIS_SR(CPUOFF + GIE);        // Enter LPM0 w/ interrupt
     __enable_interrupt();
@@ -337,6 +335,8 @@ int main(void) {
          while(TXMode == TRANSMIT){
                          I2C_Master_WriteReg(0x40, 0xD1, Reg_Data, 0x01); //write the desired command that is to return the value
                          I2C_Master_ReadReg(0x40, 0xD1, 2);
+                        // I2C_Master_WriteReg(0x40, 0x89, Reg_Data, 0x01); //write the desired command that is to return the value
+                        // I2C_Master_ReadReg(0x40, 0x89, 2);
                          CopyArray(ReceiveBuffer, data, 2);
 
                          while(!(IFG2 & UCA0TXIFG));
@@ -344,7 +344,6 @@ int main(void) {
                          while(!(IFG2 & UCA0TXIFG));      // 0xD1 INA233 Vshunt register LSB
                          UCA0TXBUF = (char) data[0];
                          }
-
     }
 
 }
@@ -459,7 +458,7 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCIAB0RX_ISR (void)
     {
     unsigned char inp;
        inp = UCA0RXBUF;
-       int i =0;
+       int i = 0;
 
        switch(inp)
        {
@@ -507,9 +506,8 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCIAB0RX_ISR (void)
            break;
 
            case 'j':
-        	   I2C_Master_WriteReg(0x40, 0xD4, INA_D4, 0x02);
 
-        	   I2C_Master_WriteReg(0x40, 0xD4, Reg_Data, 0x01); //write the desired command that is to return the value
+               I2C_Master_WriteReg(0x40, 0xD4, Reg_Data, 0x01); //write the desired command that is to return the value
                I2C_Master_ReadReg(0x40, 0xD4, 2);
                CopyArray(ReceiveBuffer, data, 2);
 
@@ -517,6 +515,25 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCIAB0RX_ISR (void)
                UCA0TXBUF = (char) data[1];      // 0xD1 INA233 Vshunt register MSB
                while(!(IFG2 & UCA0TXIFG));      // 0xD1 INA233 Vshunt register LSB
                UCA0TXBUF = (char) data[0];
+
+               I2C_Master_WriteReg(0x40, 0xD0, Reg_Data, 0x01); //write the desired command that is to return the value
+               I2C_Master_ReadReg(0x40, 0xD0, 2);
+               CopyArray(ReceiveBuffer, data, 2);
+
+               while(!(IFG2 & UCA0TXIFG));
+               UCA0TXBUF = (char) data[1];      // 0xD1 INA233 Vshunt register MSB
+               while(!(IFG2 & UCA0TXIFG));      // 0xD1 INA233 Vshunt register LSB
+               UCA0TXBUF = (char) data[0];
+           break;
+
+           case 'k':
+               P2OUT |= BIT2; // Set P2.2 HIGH
+           break;
+
+           case 'l':
+               P2OUT &= (~BIT2);   // Set P2.2 LOW
+               I2C_Master_WriteReg(0x40, 0xD4, INA1_D4, 0x02);
+
            break;
 
            case 'x':
