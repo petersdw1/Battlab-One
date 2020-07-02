@@ -1,10 +1,10 @@
 # BattLab-One
 A New Tool for Estimating Battery Life for Your Next Internet of Things Project 
 
-  BattLab_One_Beta_1.3.py - Python Application Code
+  BattLab_One_Production_Rev_A.py - Python Application Code for Production version 1.01
 
-  DesignPrototype_RevC.sch - Schematic in Eagle
+  Production_Rev_A.sch - Schematic in Eagle
 
-  DesignPrototype_RevC.brd - PCB Layout in Eagle
+  Production_Rev_A..brd - PCB Layout in Eagle
 
-  MSP430Firmware.c - Firmware code for the MSP430
+  MSP430Firmware.c - Firmware code for the MSP430 for Production Version 1.01
