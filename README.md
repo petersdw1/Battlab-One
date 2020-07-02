@@ -8,3 +8,5 @@ A New Tool for Estimating Battery Life for Your Next Internet of Things Project
   Production_Rev_A..brd - PCB Layout in Eagle
 
   MSP430Firmware.c - Firmware code for the MSP430 for Production Version 1.01
+  
+  BOM_Production_Rev_A - Bill of Materials for Battlab-One Production Rev A
