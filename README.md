@@ -1,6 +1,8 @@
 # BattLab-One
 A New Tool for Estimating Battery Life for Your Next Internet of Things Project 
 
+  Battlab-One Quick Start Guide
+  
   BattLab_One_Production_Rev_A.py - Python Application Code for Production version 1.01
 
   Production_Rev_A.sch - Schematic in Eagle
