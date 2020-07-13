@@ -1,5 +1,5 @@
 # BattLab-One
-A New Tool for Estimating Battery Life for Your Next Internet of Things Project 
+A New Tool for Estimating and Optimizing Battery Life for Your Next Internet of Things Project 
 
   - Battlab-One Quick Start Guide
   
