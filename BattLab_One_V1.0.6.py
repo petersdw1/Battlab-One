@@ -52,10 +52,10 @@ from serial.tools import list_ports
 import matplotlib
 from matplotlib.widgets import Cursor
 import matplotlib.pyplot as plt
+import platform
 from tkinter import colorchooser
 from tkinter import font
 import os
-import pkg_resources.py2_warn
 from tkinter import messagebox
 from tkinter import filedialog
 import webbrowser
@@ -70,12 +70,19 @@ from matplotlib.figure import Figure
 ###     SETUP ROOT, FRAMES, & MATPLOTLIB CANVAS
 #################################################################################
 
+def GetIconPath():
+   if platform.system() == 'Linux':
+      return '@icons/bbirdlogo.xbm'
+   else:
+      return 'icons/bbirdlogo.ico'
+
+
 root = tk.Tk()
 root.wm_title('BattLab One')
 root.resizable(False,False)
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
-root.iconbitmap('bbirdlogo.ico')
+root.iconbitmap(GetIconPath())
 
 s = ttk.Style() 
 s.configure('TLabelframe', background='dark gray')
@@ -86,7 +93,7 @@ profile_frame.grid(row=0, column=0, padx=5,pady=(1,1),sticky = 'n')
 def openBBL():
    webbrowser.open_new('http://bluebird-labs.com')
 
-img = PhotoImage(file='bbirdlogo_png1.png')
+img = PhotoImage(file='icons/bbirdlogo_png1.png')
 logo_button = tk.Button(profile_frame,image=img,command=openBBL,state=tk.NORMAL)
 logo_button.grid(row=25,column=0,rowspan=4, padx=(5,4),pady=(5,5),sticky = 'sw')
 
@@ -189,7 +196,7 @@ def get_ports():
 
 def popupmsg(msg):
     popup = tk.Tk()
-    popup.iconbitmap('bbirdlogo.ico')
+    popup.iconbitmap(GetIconPath())
     popup.wm_title("About")
     label = ttk.Label(popup, text=msg,)
     label.grid(row=0,column=0, padx=(10,10),pady= (10,10),sticky = 'nsew')
@@ -199,7 +206,7 @@ def popupmsg(msg):
 
 def popupmsg1(msg):
     popup1 = tk.Tk()
-    popup1.iconbitmap('bbirdlogo.ico')
+    popup1.iconbitmap(GetIconPath())
     popup1.wm_title("Sleep Capture Duration")
     label2 = ttk.Label(popup1, text="Current Duration in Seconds = "+ str(sleep_timer.get()))
     label2.grid(row=1,column=0, padx=(10,10),pady= (10,10),sticky = 'nsew')
@@ -218,7 +225,7 @@ def popupmsg1(msg):
 
 def popupmsg2(msg):
     popup2 = tk.Tk()
-    popup2.iconbitmap('bbirdlogo.ico')
+    popup2.iconbitmap(GetIconPath())
     popup2.wm_title("Sleep Current Error")
     label2 = ttk.Label(popup2, text=msg,)
     label2.grid(row=0,column=0, padx=(10,10),pady= (10,10),sticky = 'nsew')
@@ -243,7 +250,7 @@ def samplesmsg():
          cmd = 'v'
          bytes_returned = ser.write(cmd.encode())
       smp.destroy()
-   smp.iconbitmap('bbirdlogo.ico')
+   smp.iconbitmap(GetIconPath())
    smp.wm_title("Set Sample Number")
    label2 = ttk.Label(smp, text="Select the number of samples for averaging \n\r Number of samples: ",)
    label2.grid(row=0,column=0, padx=(10,10),pady= (10,10),sticky = 'nsew')
