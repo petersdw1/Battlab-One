@@ -565,24 +565,17 @@ def Disclaimer():
              EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.')
 
 
-def quitapp():
-
-   u = tk.IntVar()
-   u=0
-    
+def quitapp(window):
    if messagebox.askokcancel("Quit", "Do you want to quit?"):
       try:
          cmd = 'i'
          bytes_returned = ser.write(cmd.encode())
          ser.close()
-         root.destroy()
       except:
-         root.destroy()
          pass
-      
-   else:
-      u=u+1 #Do nothing     
-   
+      window.quit()
+
+
 #################################################################################
 ###   SETUP MENU SYSTEM
 #################################################################################
@@ -1800,6 +1793,6 @@ data_plot(x,y,str(0),str(0),str(0),str(0),str(0))
 #cmd = 'i' #turn voltage off
 #bytes_returned = ser.write(cmd.encode())
 
-root.protocol("WM_DELETE_WINDOW", quitapp)
-   
+root.protocol("WM_DELETE_WINDOW", lambda arg=root: quitapp(arg))
 root.mainloop()
+
