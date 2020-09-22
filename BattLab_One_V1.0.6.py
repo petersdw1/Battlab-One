@@ -1208,6 +1208,8 @@ def capture_sleep_profile():
       bytes_returned = ser.write(cmd.encode())
       sleep_file.close()
       
+      shunt_var.set(1)
+      
       progress_label_s.config(text = 'Complete')
       progress_label_s.config(foreground = 'green')
       
