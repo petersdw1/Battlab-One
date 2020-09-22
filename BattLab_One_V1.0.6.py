@@ -589,7 +589,7 @@ filemenu.add_command(label='Open', command=OpenFile)
 filemenu.add_command(label='Save', command=SaveFile, state=DISABLED)
 filemenu.add_command(label='Export', command=export_data, state=DISABLED)
 filemenu.add_separator()
-filemenu.add_command(label='Exit', command=quitapp)
+filemenu.add_command(label='Exit', command=lambda arg=root:quitapp(arg))
 
 optionsmenu = Menu(menu)
 menu.add_cascade(label='Options', menu=optionsmenu)
