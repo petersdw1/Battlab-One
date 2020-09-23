@@ -1209,6 +1209,7 @@ def capture_sleep_profile():
       sleep_file.close()
       
       shunt_var.set(1)
+      select_lo_shunt()
       
       progress_label_s.config(text = 'Complete')
       progress_label_s.config(foreground = 'green')
