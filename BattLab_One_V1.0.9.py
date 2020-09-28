@@ -56,7 +56,7 @@ import platform
 from tkinter import colorchooser
 from tkinter import font
 import os
-#import pkg_resources.py2_warn
+import pkg_resources.py2_warn
 from tkinter import messagebox
 from tkinter import filedialog
 import webbrowser
