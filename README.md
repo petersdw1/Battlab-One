@@ -14,3 +14,14 @@ A New Tool for Estimating and Optimizing Battery Life for Your Next Internet of 
   - BOM_Production_Rev_A - Bill of Materials for Battlab-One Production Rev A
   
   See more at www.bluebird-labs.com
+
+# Development
+
+This project uses pipenv to take care of setting up a virtual environment as well as managing the dependencies needed.
+
+1. Install pipenv as describe here https://pypi.org/project/pipenv/
+2. Start a terminal and change to the root folder of this project.
+3. Run pipenv to setup the environment: `pipenv install --dev`
+4. Start the pipenv shell: `pipenv shell`
+5. Start the application: `python BattLab_One_V1.0.6.py`
+
