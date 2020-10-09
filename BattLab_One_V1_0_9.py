@@ -1226,21 +1226,21 @@ def capture_sleep_profile():
          avg_sleep_event_I_units.configure(text='mA')
          avg_sleep_event_I_units.configure(foreground='green')
      
-    elif sl_shunt_var.get() == '10uA - 800uA': #Lo current shunt is ON:   
-         ser.reset_input_buffer()
-         ser.reset_output_buffer()
-         sleep_file=open('sleep_current.txt', mode='w', buffering =(10*1024*1024))
+   elif sl_shunt_var.get() == '10uA - 800uA': #Lo current shunt is ON:   
+      ser.reset_input_buffer()
+      ser.reset_output_buffer()
+      sleep_file=open('sleep_current.txt', mode='w', buffering =(10*1024*1024))
    
-         time.sleep(0.5)
+      time.sleep(0.5)
 
-         offset1=time.clock()
-         cmd = 'z'
-         bytes_returned = ser.write(cmd.encode())
+      offset1=time.clock()
+      cmd = 'z'
+      bytes_returned = ser.write(cmd.encode())
 
-         while counter1 < sleep_timer.get():
-            sleep_reading.set(ser.readline(2).hex())
-            if round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor_LO.get()),6) < 812 \
-                     and round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor_LO.get()),6) != 0.0:
+      while counter1 < sleep_timer.get():
+         sleep_reading.set(ser.readline(2).hex())
+         if round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor_LO.get()),6) < 812 \
+                  and round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor_LO.get()),6) != 0.0:
             si.append(round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor_LO.get()),6))
             sleep_file.write(str(round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor_LO.get()),6)))
             sleep_file.write('\n')
