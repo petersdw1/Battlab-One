@@ -140,7 +140,10 @@ lo_offset.set(0)
 
 sleep_timer=tk.IntVar()
 sleep_timer.set(1)
-   
+
+man_sleep_current=tk.DoubleVar()
+man_sleep_current.set(100.00)
+
 LSB=0.0025
 
 line_color = StringVar()
@@ -242,6 +245,37 @@ def popupmsg2(msg):
     pop_up_button2.grid(row=3,column=0,padx=30,pady=(10,10),sticky = 'w')
     popup2.mainloop()
       
+def manual_sleep_msg():
+    man_sleep = tk.Tk()
+    man_sleep.iconbitmap(GetIconPath())
+      
+    man_sleep.wm_title("Manual Sleep Current")
+    label_man = ttk.Label(man_sleep, text="Enter Sleep Current")
+    label_man.grid(row=0,column=0, padx=(10,10),pady= (10,10),sticky = 'nsew')
+    label_man_units = ttk.Label(man_sleep, text="uA")
+    label_man_units.grid(row=1,column=0, padx=(90,10),pady= (10,10),sticky = 'nsew')
+    
+    man_sleep_entry = Entry(man_sleep, width=10,textvariable=man_sleep_current)
+    man_sleep_entry.grid(row=1, column=0,padx=(10,4),pady=(1,1),sticky = 'w')
+    man_sleep_entry.insert(0,123.4)
+    
+    def sleep_man():
+       try:
+          float(man_sleep_entry.get())
+      
+       except ValueError:
+          popupmsg("Please only enter 0123456789.")
+       
+       man_sleep_current.set(float(man_sleep_entry.get())/1000)
+       avg_sleep_event_I.configure(foreground='black')
+       avg_sleep_event_I_units.configure(foreground='black')
+       capture_sleep_profile()
+       man_sleep.destroy()
+
+    close_button = tk.Button(man_sleep, text="Save and Close",command = sleep_man,state=tk.NORMAL)
+    close_button.grid(row=3,column=0,padx=30,pady=(10,10),sticky = 'w')
+    man_sleep.mainloop()
+   
 def samplesmsg():
    smp = tk.Tk()
    def set_samples():
@@ -1100,8 +1134,7 @@ def capture_profile():
 
     capture_active_event_button.config(state=tk.DISABLED)
     capture_sleep_btn_3.configure(state=tk.NORMAL)
-    shunt_button.configure(state=tk.NORMAL)
-    shunt_button1.configure(state=tk.NORMAL)
+  
     export_button.configure(state=tk.NORMAL)
     filemenu.entryconfigure(3,state=tk.NORMAL)
     
@@ -1145,7 +1178,7 @@ def capture_sleep_profile():
    progress_label_s.config(text = 'Capturing...' )
    progress_label_s.config(foreground = 'red' )
    
-   if shunt_var.get() == 1: #Lo current shunt is OFF
+   if sl_shunt_var.get() == '800uA - 500mA': #Lo current shunt is OFF
       ser.reset_input_buffer()
       ser.reset_output_buffer()
       sleep_file=open('sleep_current.txt', mode='w', buffering =(10*1024*1024))
@@ -1177,15 +1210,14 @@ def capture_sleep_profile():
       sleep_file.close()
       progress_label_s.config(text = 'Complete')
       progress_label_s.config(foreground = 'green')
-      
-      #sl_captured_average_current_3 = (sum(si)/(len(si)))
+     
       sl_captured_average_current_3 = (sum(si)/(len(si)))- lo_offset.get() #Input bias current minus Offset voltage calibration
 
       if sl_captured_average_current_3 < .811:
          avg_sleep_event_I_units.configure(text='')
          progress_label_s.config(foreground='red',text="Overflow")
          avg_sleep_event_I.configure(foreground='red')
-         popupmsg2("Sleep current out of range. \n\r Try using the 10uA - 800uA range. \n\r Captured sleep current < " + str(round(sl_captured_average_current_3,3)) + "mA")
+         popupmsg2("Sleep current out of range. Try using the 10uA - 800uA range.\n\rCaptured sleep current < 800uA")
          sl_captured_average_current_3 = 0
       else:
          avg_sleep_event_I.configure(text=str(round(sl_captured_average_current_3,2)))
@@ -1194,9 +1226,7 @@ def capture_sleep_profile():
          avg_sleep_event_I_units.configure(text='mA')
          avg_sleep_event_I_units.configure(foreground='green')
       
-   else:
-
-      #Lo current shunt is ON
+   elif sl_shunt_var.get() == '10uA - 800uA': #Lo current shunt is ON:
       ser.reset_input_buffer()
       ser.reset_output_buffer()
       sleep_file=open('sleep_current.txt', mode='w', buffering =(10*1024*1024))
@@ -1226,21 +1256,20 @@ def capture_sleep_profile():
       bytes_returned = ser.write(cmd.encode())
       sleep_file.close()
       
-      shunt_var.set(1)
-      select_lo_shunt()
+      sl_shunt_var.set('800uA - 500mA')
+      sl_select_shunt(0) 
       
       progress_label_s.config(text = 'Complete')
       progress_label_s.config(foreground = 'green')
-      
-      #sl_captured_average_current_3 = (sum(si)/(len(si)))
+     
       sl_captured_average_current_3 = (sum(si)/(len(si)))- lo_offset.get() #Input bias current minus Offset voltage calibration
 
-      if sl_captured_average_current_3 *1000 > 811 or sl_captured_average_current_3 *1000 < 0:
+      if sl_captured_average_current_3 *1000 > 811:
          avg_sleep_event_I_units.configure(state=tk.DISABLED)
          progress_label_s.config(foreground='red', text="Overflow")
          avg_sleep_event_I.configure(foreground='red')
          avg_sleep_event_I_units.configure(text='')
-         popupmsg2("Sleep current out of range.\n\r Try using the 800uA - 500mA range.\n\r Captured sleep current > " + str(round(sl_captured_average_current_3,3)) + "uA")
+         popupmsg2("Sleep current out of range.\n\r Try using the 800uA - 500mA range Captured sleep current > 800uA")
          sl_captured_average_current_3 = 0
       else:
          avg_sleep_event_I.configure(text=str(round(sl_captured_average_current_3*1000,2)))
@@ -1248,7 +1277,17 @@ def capture_sleep_profile():
          avg_sleep_event_I_units.configure(state=tk.NORMAL)
          avg_sleep_event_I_units.configure(text='uA')
          avg_sleep_event_I_units.configure(foreground='green')
-   
+  
+elif sl_shunt_var.get() == 'Manual': #Enter Sleep Current Manually:
+      sl_captured_average_current_3 = man_sleep_current.get()
+      avg_sleep_event_I.configure(text=str(round(sl_captured_average_current_3*1000,2)))
+      time.sleep(0.5)
+      pb_vd_s.stop()
+      pb_vd_s.destroy()
+      time.sleep(0.5)
+      progress_label_s.config(text = 'Complete')
+      progress_label_s.config(foreground = 'green')
+
    with open(soc_file.get(), 'r')as csvfile:
       inp = csv.reader(csvfile, delimiter = ',')
       headers = next(inp, None)
@@ -1383,7 +1422,7 @@ def optimize_profile():
                                               float(ae_optimized_current_entry_4.get())))/(float(sl_optimized_duration_entry_4.get()) \
                                                                                            + float(ae_optimized_duration_entry_4.get()))
 
-   average_current_profile_optimized_label_4.configure(text=str(round(float(optimized_average_current_all_events),2)),\
+   average_current_profile_optimized_label_4.configure(text=str(round(float(optimized_average_current_all_events),4)),\
                                                        foreground='black',background='dark gray')
 
    #battery_life_hours = capacity in mAH / mA
@@ -1406,11 +1445,9 @@ def reset():
     step3_label.configure(foreground='black')
     step4_label.configure(foreground='black')
 
-    #Turn off low current sense resistor
-    select_lo_shunt()
-    #Set sense resistor to low resistance
-    shunt_var.set(1)
-    shunt_button1.configure(state=tk.DISABLED)
+    #Set sense resistor
+    sl_shunt_var.set('800uA - 500mA')
+    sl_select_shunt(0)
          
     optimize_button.configure(state=tk.DISABLED)
     filemenu.entryconfigure(2, state=tk.DISABLED)
@@ -1436,8 +1473,6 @@ def reset():
     capture_active_event_button.config(text = 'Capture Active' )
     capture_active_event_button.config(state=tk.DISABLED)
     capture_sleep_btn_3.configure(state=tk.DISABLED)
-    shunt_button.configure(state=tk.DISABLED)
-    shunt_button1.configure(state=tk.DISABLED)
     export_button.configure(state=tk.DISABLED)
 
     #offset = 0
@@ -1490,7 +1525,7 @@ def reset():
     
     avg_active_event_I_2.configure(text='0.00', foreground = 'black')
     avg_active_event_I_units.configure(foreground = 'black')
-    avg_sleep_event_I.configure(text='0000', foreground = 'black')
+    avg_sleep_event_I.configure(text='000.00', foreground = 'black')
     avg_sleep_event_I_units.configure(foreground = 'black')
 
     reset_button = tk.Button(profile_frame,text='Reset',command=reset,state=tk.DISABLED)
@@ -1617,22 +1652,27 @@ avg_active_event_I_units.grid(row=12, column = 0, padx=(170,4),pady=(1,1), stick
 sl_range_labe1_3 = Label(profile_frame, text='Current Range',background='dark gray')
 sl_range_labe1_3.grid(row=14, column=0, padx=(210,2) ,pady=(1,1),sticky = 'w')
 
-def select_lo_shunt():
-   #Turn OFF low current sense resistor
-   cmd = 'l'
-   bytes_returned = ser.write(cmd.encode())
+def sl_select_shunt(eventObject):
+   if (sl_shunt_var.get() == '800uA - 500mA'):
+      #Turn OFF low current sense resistor
+      cmd = 'l'
+      bytes_returned = ser.write(cmd.encode())
+   
+   elif (sl_shunt_var.get() == '10uA - 800uA'):
+      #Turn ON low current sense resistor
+      cmd = 'k'
+      bytes_returned = ser.write(cmd.encode())
+   else:
+      manual_sleep_msg()
 
-def select_hi_shunt():
-   #Turn ON low current sense resistor
-   cmd = 'k'
-   bytes_returned = ser.write(cmd.encode())
-
-shunt_var = IntVar()
-shunt_button = Radiobutton(profile_frame, text="800uA - 500mA", command=select_lo_shunt, variable=shunt_var, value=1, state=tk.DISABLED)
-shunt_button.grid(row=14, column=0, padx=(205,4),pady=(1,1),sticky='w')
-shunt_button1 = Radiobutton(profile_frame, text="10uA - 800uA", command=select_hi_shunt,variable=shunt_var, value=2, state=tk.DISABLED)
-shunt_button1.grid(row=15, column=0, padx=(205,4),pady=(1,1),sticky='w')
-shunt_var.set(1)
+sl_shunt_var = tk.StringVar()
+sl_shunt_select__combo_box = ttk.Combobox(profile_frame, width=14, textvariable=sl_shunt_var)
+sl_shunt_select__combo_box['values'] = ('800uA - 500mA', '10uA - 800uA','Manual') 
+sl_shunt_select__combo_box.grid(row=15, column=0,padx=(205,4),pady=(1,1),sticky='w')
+sl_shunt_select__combo_box.current(0)
+sl_shunt_var.set('800uA - 500mA')
+sl_select_shunt(0)
+sl_shunt_select__combo_box.bind('<<ComboboxSelected>>', sl_select_shunt)
 
 sl_duration_labe1_3 = Label(profile_frame, text='DUT Sleep Duration',background='dark gray')
 sl_duration_labe1_3.grid(row=14, column=0, padx=10,pady=(1,1),sticky = 'w')
