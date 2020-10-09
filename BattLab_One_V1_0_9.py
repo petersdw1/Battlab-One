@@ -390,7 +390,7 @@ ports = list(serial.tools.list_ports.comports())
 for p in ports:
    
    if p.vid == 0x0403 and p.pid == 0x6001:
-      ser_num_prefix = p.serial_number[0] + p.serial_number[1]
+      ser_num_prefix = p.serial_number[:2]
       if ser_num_prefix == 'BB':
          com_port = list(list_ports.grep("0403:6001"))[0][0]       
          init(com_port)
