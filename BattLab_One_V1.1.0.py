@@ -78,7 +78,7 @@ def GetIconPath():
       return 'icons\\bbirdlogo.ico'
 
 root = tk.Tk()
-root.wm_title('BattLab One')
+root.wm_title('BattLab One Version 1.1.1')
 root.resizable(False,False)
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
@@ -118,10 +118,12 @@ w1.grid(padx=5,pady=(5,5),sticky = 'nsew')
 #################################################################################
 ###   SETUP GLOBAL VARIABLES
 #################################################################################
-global si,x,y, avg_active_event_I, line_color, sleep_timer,soc_file
+global si,x,y,s_x,s_y,avg_active_event_I, line_color, sleep_timer,soc_file
 
 x = []
 y = []
+s_x = []
+s_y = []
 si = []
 soc = []
 ocv = []
@@ -522,9 +524,22 @@ def SaveFile():
                
     analysis.close
     
-def export_data(): #Save to Outputfile
+def export_ae_data(): #Save active event data to Outputfile
            
    rows = zip(x,y)
+
+   root.filename =  filedialog.asksaveasfilename(initialdir = 'C:/Users/dwpete3/Desktop',title = 'Select file',
+                                filetypes = (('CSV Files','*.csv'),('all files','*.*')))
+   
+   with open((root.filename + '.csv'), 'w', newline='') as analysis:
+      writer = csv.writer(analysis, delimiter=',')
+      for row in rows:
+         writer.writerow(row)
+   analysis.close()
+
+def export_s_data(): #Save sleep event data to Outputfile
+           
+   rows = zip(s_x,s_y)
 
    root.filename =  filedialog.asksaveasfilename(initialdir = 'C:/Users/dwpete3/Desktop',title = 'Select file',
                                 filetypes = (('CSV Files','*.csv'),('all files','*.*')))
@@ -608,7 +623,8 @@ filemenu = Menu(menu)
 menu.add_cascade(label='File', menu=filemenu)
 filemenu.add_command(label='Open', command=OpenFile)
 filemenu.add_command(label='Save', command=SaveFile, state=DISABLED)
-filemenu.add_command(label='Export', command=export_data, state=DISABLED)
+filemenu.add_command(label='Export Active Event Data', command=export_ae_data, state=DISABLED)
+filemenu.add_command(label='Export Sleep Event Data', command=export_s_data, state=DISABLED)
 filemenu.add_separator()
 filemenu.add_command(label='Exit', command=lambda arg=root:quitapp(arg))
 
@@ -628,35 +644,82 @@ helpmenu.add_command(label='Disclaimer', command=Disclaimer)
 #################################################################################
 ####    MATPLOTLIB FOR ACTIVE CURRENT PLOTS
 #################################################################################
-def data_plot(x,y,voltage, minimum,maximum,ae_duration,ae_current):
+def data_plot(x,y,voltage, minimum,maximum,duration,current):
     #PLOT THE DATA
 
-    global ax, f
-    
-    f = plt.figure(figsize=(8, 4), dpi=100,clear=True)
-    ax = f.add_subplot(111)
-    plt.style.use('fast')
-    
-    ax.set_title('Voltage: ' + voltage + ' volts   '  +'Capture Time:  '+ ae_duration + ' seconds' + \
-                       '\n' + 'Minimum: '  + minimum + 'mA    ' + 'Maximum: '+ maximum + 'mA    ' + 'Average Active Current: ' + ae_current + 'mA    ', fontsize=10)
+    global ax, f, axs, fs, newWindow
 
-    ax.set_xlabel('Milliseconds')
-    ax.set_ylabel('Milliamps')
+    
+       
+    if plot_sleep_var.get() == 1:
+
+       try:
+          if newWindow.state() == 'normal':
+             newWindow.destroy()
+       except:
+          pass
+
+       newWindow = tk.Toplevel(root)
+       newWindow.iconbitmap(GetIconPath())
+             
+       fs = plt.figure(figsize=(8, 4), dpi=100,clear=True)
+       axs = fs.add_subplot(111)
+       plt.style.use('fast')
+
+       if avg_sleep_event_I.cget("text") == "OL":
+          axs.set_title('Overflow - Sleep Current less than 10 uA', color = 'red', fontsize=12)
+
+       else:
+          axs.set_title('Sleep Current Profile: ' + 'Voltage' + voltage + ' volts   '  +'Capture Time:  '+  duration + ' seconds' + \
+                       '\n' + 'Minimum: '  + minimum + 'mA    ' + 'Maximum: '+ maximum + 'mA    ' + 'Average Sleep Current: ' + current + 'mA    ', fontsize=10)
+
+       axs.set_xlabel('Milliseconds')
+       axs.set_ylabel('Milliamps')
  
-    ax.plot(x, y, color=line_color.get(), linewidth=line_width.get())
+       axs.plot(x, y, color=line_color.get(), linewidth=line_width.get())
 
-    ax.grid(b=True, which='major', axis='both',color='black', linestyle='-', linewidth=.1)
+       axs.grid(b=True, which='major', axis='both',color='black', linestyle='-', linewidth=.1)
     
-    cursor = Cursor(ax,color=line_color.get(), linewidth=.3)
-    
-    canvas = FigureCanvasTkAgg(f, master=w)
-    canvas.get_tk_widget().grid(row=0,column=6)
+       cursor1 = Cursor(axs,color=line_color.get(), linewidth=.3)
 
-    toolbarFrame = ttk.Frame(master=frame)
-    toolbarFrame.grid(row=14, column=3, sticky='w' )
-    toolbar = NavigationToolbar2Tk(canvas, toolbarFrame)
-    #toolbar = NavigationToolbar2TkAgg(canvas, toolbarFrame)
-    canvas.draw()
+       
+       canvas1 = FigureCanvasTkAgg(fs, master=newWindow)
+       canvas1.get_tk_widget().grid(row=0,column=0)
+
+       toolbarFrame1 = ttk.Frame(master=newWindow)
+       toolbarFrame1.grid(row=14, column=0, sticky='w' )
+       toolbar1 = NavigationToolbar2Tk(canvas1, toolbarFrame1)
+       #toolbar = NavigationToolbar2TkAgg(canvas, toolbarFrame)
+       canvas1.draw()
+
+    else:
+
+       f = plt.figure(figsize=(8, 4), dpi=100,clear=True)
+       ax = f.add_subplot(111)
+       plt.style.use('fast')
+       
+       ax.set_title('Active Event Profile: ' + 'Voltage: ' + voltage + ' volts   '  +'Capture Time:  '+ duration + ' seconds' + \
+                       '\n' + 'Minimum: '  + minimum + 'mA    ' + 'Maximum: '+ maximum + 'mA    ' + 'Average Active Current: ' + current + 'mA    ', fontsize=10)
+
+       ax.set_xlabel('Milliseconds')
+       ax.set_ylabel('Milliamps')
+ 
+       ax.plot(x, y, color=line_color.get(), linewidth=line_width.get())
+
+       ax.grid(b=True, which='major', axis='both',color='black', linestyle='-', linewidth=.1)
+    
+       cursor = Cursor(ax,color=line_color.get(), linewidth=.3)
+    
+       canvas = FigureCanvasTkAgg(f, master=w)
+       canvas.get_tk_widget().grid(row=0,column=6)
+
+       toolbarFrame = ttk.Frame(master=frame)
+       toolbarFrame.grid(row=14, column=3, sticky='w' )
+       toolbar = NavigationToolbar2Tk(canvas, toolbarFrame)
+       #toolbar = NavigationToolbar2TkAgg(canvas, toolbarFrame)
+       canvas.draw()
+
+    plot_sleep_var.set(0)
 
 #################################################################################
 ###    SETUP STATE OF CHARGE GRAPH
@@ -1123,10 +1186,10 @@ def capture_profile():
     avg_active_event_I_units.configure(foreground='green',state=tk.NORMAL)
 
     #capture_active_event_button.config(state=tk.DISABLED)
-    capture_sleep_btn_3.configure(state=tk.NORMAL)
   
-    export_button.configure(state=tk.NORMAL)
+    export_ae_button.configure(state=tk.NORMAL)
     filemenu.entryconfigure(3,state=tk.NORMAL)
+    capture_sleep_btn_3.configure(state=tk.NORMAL)
     
     step2_label.configure(foreground='black')
     step3_label.configure(foreground='blue')
@@ -1139,14 +1202,17 @@ def capture_profile():
 #################################################################################
 
 def capture_sleep_profile():
-   global sl_captured_average_current_3, total_event_duration,battery_life_hours, battery_life_days,progress_label_s
-
+   global sl_captured_average_current_3, total_event_duration,battery_life_hours, battery_life_days, progress_label_s
+      
    try:
        float(sleep_duration.get())
       
    except ValueError:
        popupmsg("Please only enter 0123456789.")
-   
+       
+   s_x[:] = []
+   s_y[:] = []
+   t=0
    soc_state = 0
    si[:] = []
    sl_select_shunt(0)
@@ -1180,12 +1246,15 @@ def capture_sleep_profile():
       bytes_returned = ser.write(cmd.encode())
 
       while counter1 < sleep_timer.get():
+         sleep_file.write(str(t))
+         sleep_file.write(',')
          sleep_reading.set(ser.readline(2).hex())
          if round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor.get()),6) < 500 \
                   and round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor.get()),6) != 0.0:
            si.append(round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor.get()),6))
            sleep_file.write(str(round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor.get()),6)))
            sleep_file.write('\n')
+         t=t+1
          root.update()
          counter1 = time.clock()-offset1
          cntr1.set(counter1)
@@ -1229,12 +1298,15 @@ def capture_sleep_profile():
       bytes_returned = ser.write(cmd.encode())
 
       while counter1 < sleep_timer.get():
+         sleep_file.write(str(t))
+         sleep_file.write(',')
          sleep_reading.set(ser.readline(2).hex())
          if round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor_LO.get()),6) < 812 \
                   and round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor_LO.get()),6) != 0.0:
             si.append(round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor_LO.get()),6))
             sleep_file.write(str(round((int(sleep_reading.get(),16)*LSB)/float(sense_resistor_LO.get()),6)))
             sleep_file.write('\n')
+         t=t+1
          root.update()
          counter1 = time.clock()-offset1
          cntr1.set(counter1)
@@ -1257,7 +1329,7 @@ def capture_sleep_profile():
      
       sl_captured_average_current_3 = (sum(si)/(len(si)))- lo_offset.get() #Input bias current minus Offset voltage calibration
 
-      if sl_captured_average_current_3 *1000 > 811:
+      if round(sl_captured_average_current_3*1000,2) > 811:
          avg_sleep_event_I_units.configure(state=tk.DISABLED)
          progress_label_s.config(foreground='red', text="Overflow")
          avg_sleep_event_I.configure(foreground='red')
@@ -1265,11 +1337,16 @@ def capture_sleep_profile():
          popupmsg2("Sleep current out of range.\n\r Try using the 800uA - 500mA range Captured sleep current > 800uA")
          sl_captured_average_current_3 = 0
       else:
-         avg_sleep_event_I.configure(text=str(round(sl_captured_average_current_3*1000,2)))
-         avg_sleep_event_I.configure(foreground='green')
-         avg_sleep_event_I_units.configure(state=tk.NORMAL)
-         avg_sleep_event_I_units.configure(text='uA')
-         avg_sleep_event_I_units.configure(foreground='green')
+         if round(sl_captured_average_current_3*1000,2) >= 10:
+            avg_sleep_event_I.configure(text=str(round(sl_captured_average_current_3*1000,2)))
+            avg_sleep_event_I.configure(foreground='green')
+            avg_sleep_event_I_units.configure(state=tk.NORMAL)
+            avg_sleep_event_I_units.configure(text='uA')
+            avg_sleep_event_I_units.configure(foreground='green')
+         else:
+            progress_label_s.config(foreground='red', text="Overflow")
+            avg_sleep_event_I.configure(text="OL")
+            avg_sleep_event_I.configure(foreground='red')  
 
    with open(soc_file.get(), 'r')as csvfile:
       inp = csv.reader(csvfile, delimiter = ',')
@@ -1286,8 +1363,30 @@ def capture_sleep_profile():
       for i in range(len(my_list)-1):
          if (float(my_list[i][1])) < float(dut_cutoff_optimized_entry_4.get()):
             soc_state=soc_state+1
-         new_bat_cap = float(1-(soc_state/100))*float(battery_capactity_entry_1.get())    
-              
+         new_bat_cap = float(1-(soc_state/100))*float(battery_capactity_entry_1.get())
+         
+   with open('sleep_current.txt', 'r')as csvfile:
+      t=0
+      inp = csv.reader(csvfile, delimiter = ',')
+      for row in inp:        
+         if round(float(row[1]),5)< 500 and round(float(row[1]),5) > 0.0:
+            s_x.append(t)
+            s_y.append(round(float(row[1])- lo_offset.get(),5))
+            t=t+1
+         else:
+            u=u+1  #Do Nothing
+
+
+   s_captured_average_current_3 = round((sum(s_y)/(len(s_y))),4)
+   s_captured_duration_3 = round(((max(s_x)-min(s_x))/1000),2)
+   max_s_current = round(max(s_y),4)
+   min_s_current = round(min(s_y),4)
+
+   if plot_sleep_var.get() == 1:
+      data_plot(s_x,s_y,voltage.get(),str(min_s_current),str(max_s_current),str(s_captured_duration_3), str(s_captured_average_current_3))
+
+   csvfile.close()         
+
    #Update Results Step4 data
       
    total_event_duration = float(sleep_duration.get()) + ae_captured_duration_2
@@ -1327,6 +1426,7 @@ def capture_sleep_profile():
    reset_button.configure(state=tk.NORMAL)
    save_button.configure(state=tk.NORMAL)
    optimize_button.configure(state=tk.NORMAL)
+   export_s_button.configure(state=tk.NORMAL)
 
    step3_label.configure(foreground='black')
    step4_label.configure(foreground='blue')
@@ -1452,13 +1552,14 @@ def reset():
     filemenu.entryconfigure(2, state=tk.DISABLED)
     filemenu.entryconfigure(3, state=tk.DISABLED)
     save_button.configure(state=tk.DISABLED)
-    export_button.configure(state=tk.DISABLED)
+    export_ae_button.configure(state=tk.DISABLED)
+    export_s_button.configure(state=tk.DISABLED)
+    capture_sleep_btn_3.configure(state=tk.DISABLED)
     
     psu_combo_box.configure(state=tk.NORMAL)
     trigger_box.config(state=tk.NORMAL)
     battery_chemistry_combo_box.configure(state=tk.NORMAL)
     battery_cells_combo_box.configure(state=tk.NORMAL)
-    capture_sleep_btn_3.configure(state=tk.DISABLED)
 
     cmd = 'y' #turn off trigger interrupt and stop transmitting
     bytes_returned = ser.write(cmd.encode())
@@ -1490,11 +1591,25 @@ def reset():
     #offset = 0
     x[:] = []
     y[:] = []
+    s_x[:] = []
+    s_y[:] = []
     si[:] = []
 
     ax.plot(x, y)
     ax.cla()
     plt.close('all')
+
+    progress_label.configure(text='',background='dark gray')
+    progress_label_s.configure(text='',background='dark gray')
+    trig_var.set(0)
+    sense_persist_var.set(0)
+    plot_sleep_var.set(0)
+
+    try:
+       if newWindow.state() == 'normal':
+          newWindow.destroy()
+    except:
+       pass
     
     data_plot(x,y,str(0),str(0),str(0),str(0),str(0))
     
@@ -1502,11 +1617,6 @@ def reset():
     sl_captured_average_current_3 = 0
     ae_captured_duration_2 = 0
     soc_state = 0
-
-    progress_label.configure(text='',background='dark gray')
-    progress_label_s.configure(text='',background='dark gray')
-    trig_var.set(0)
-    sense_persist_var.set(0)
     
     #Clear all of the Labels and Entry Fields
     ae_captured_current_label_4.configure(text='-',background='dark gray')
@@ -1682,9 +1792,14 @@ sl_shunt_select__combo_box.current(0)
 sl_shunt_var.set('800uA - 500mA')
 sl_shunt_select__combo_box.bind('<<ComboboxSelected>>', sl_select_shunt)
 
+plot_sleep_var = IntVar()
+sleep_plot = tk.Checkbutton(profile_frame, text='Show Sleep Current Plot', variable=plot_sleep_var,background='dark gray', state=tk.NORMAL)
+sleep_plot.grid(row=17, column=0, padx=(10,4),pady=(1,1),sticky='w')
+
 sense_persist_var = IntVar()
 persist_box = tk.Checkbutton(profile_frame, text='Persist Sense Resistor', variable=sense_persist_var,background='dark gray', state=tk.NORMAL)
 persist_box.grid(row=17, column=0, padx=(190,4),pady=(1,1),sticky='w')
+
 
 sl_duration_labe1_3 = Label(profile_frame, text='DUT Sleep Duration',background='dark gray')
 sl_duration_labe1_3.grid(row=15, column=0, padx=10,pady=(1,1),sticky = 'w')
@@ -1838,15 +1953,18 @@ optimize_button.grid(row=27,column=0, rowspan=5,padx=(210,4),pady=(1,1),sticky =
 
 ##RESET BUTTON
 reset_button = tk.Button(profile_frame,text='Reset',command=reset,state=tk.NORMAL)
-reset_button.grid(row=28,column=0,padx=(170,4),pady=(1,1),sticky = 'sw')
+reset_button.grid(row=28,column=0,padx=(210,4),pady=(1,1),sticky = 'sw')
 
 ##SAVE BUTTON
 save_button = tk.Button(profile_frame,text='Save Results',command=SaveFile,state=tk.DISABLED)
-save_button.grid(row=27,column=0,padx=(90,4),pady=(1,1),sticky = 'sw')
+save_button.grid(row=28,column=1,padx=(0,4),pady=(1,1),sticky = 'sw')
 
 ##EXPORT DATA BUTTON
-export_button = tk.Button(profile_frame,text='Export Data',command=export_data,state=tk.DISABLED)
-export_button.grid(row=28,column=0,padx=(90,4),pady=(1,1),sticky = 'sw')
+export_ae_button = tk.Button(profile_frame,text='Export Active Data',command=export_ae_data,state=tk.DISABLED)
+export_ae_button.grid(row=28,column=1,padx=(90,4),pady=(1,1),sticky = 'sw')
+
+export_s_button = tk.Button(profile_frame,text='Export Sleep Data',command=export_s_data,state=tk.DISABLED)
+export_s_button.grid(row=28,column=1,padx=(210,4),pady=(1,1),sticky = 'sw')
 
 #STEP LABELS
 step1_label = ttk.Label(profile_frame, text='Step1 - Battery Info and PSU Output',font=('Arial Bold',11), foreground = 'blue',background='dark gray')
