@@ -27,3 +27,5 @@ This project uses pipenv to take care of setting up a virtual environment as wel
 4. Start the pipenv shell: `pipenv shell`
 5. Start the application: `python BattLab_One_V1.0.6.py`
 
+
+![image](https://user-images.githubusercontent.com/4383161/106499339-170c2800-6486-11eb-8046-a9a886a15f75.png)
