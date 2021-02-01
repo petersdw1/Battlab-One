@@ -16,6 +16,8 @@ A New Tool for Estimating and Optimizing Battery Life for Your Next Internet of 
   - 98-bluebird-labs.rules - Linux udev rules for Battlab-One
 
   See more at www.bluebird-labs.com
+  
+  ![image](https://user-images.githubusercontent.com/4383161/106499339-170c2800-6486-11eb-8046-a9a886a15f75.png)
 
 # Development
 
@@ -28,4 +30,4 @@ This project uses pipenv to take care of setting up a virtual environment as wel
 5. Start the application: `python BattLab_One_V1.0.6.py`
 
 
-![image](https://user-images.githubusercontent.com/4383161/106499339-170c2800-6486-11eb-8046-a9a886a15f75.png)
+
